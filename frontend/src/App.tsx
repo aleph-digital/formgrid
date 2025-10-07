@@ -13,7 +13,6 @@ import { FormsPage } from './pages/FormsPage'
 import { FormBuilderPage } from './pages/FormBuilderPage'
 import { FormDetailsPage } from './pages/FormDetailsPage'
 import { ProfilePage } from './pages/dashboard/ProfilePage'
-import { SettingsPage } from './pages/SettingsPage'
 
 function AppContent() {
     const location = useLocation()
@@ -74,14 +73,6 @@ function AppContent() {
                     element={
                         <RequireAuth>
                             <ProfilePage />
-                        </RequireAuth>
-                    }
-                />
-                <Route
-                    path="/dashboard/settings"
-                    element={
-                        <RequireAuth>
-                            <SettingsPage />
                         </RequireAuth>
                     }
                 />
