@@ -1,252 +1,312 @@
-# Express React Auth Boilerplate
+# FormGrid
 
-A complete full-stack authentication application with a Node.js + TypeScript backend and React + TypeScript frontend. Features modern dashboard UI, Google OAuth, password reset, and comprehensive user management.
+**Form Endpoint API Generator** - Create powerful API endpoints for your HTML forms. Generate secure, spam-protected form endpoints that work with any website or application. Built with Node.js, React, and TypeScript, featuring comprehensive file upload capabilities and multi-storage support.
 
 ## Features
+
+### API Endpoint Generation
+- **Instant API Creation** - Generate secure form endpoints in seconds
+- **Unique Endpoint URLs** - Each form gets its own dedicated API endpoint
+- **Multiple Submission Methods** - HTML forms, JavaScript, or direct API calls
+- **Automatic Code Generation** - Get ready-to-use HTML and JavaScript snippets
+- **Cross-Origin Support** - Works with any website or application
+
+### File Upload System
+- **Multiple Storage Options** - Local, MinIO, AWS S3, and Google Cloud Storage
+- **File Type Restrictions** - Configure accepted file types per field
+- **Multiple File Uploads** - Allow single or multiple files per field
+- **File Size Limits** - Configurable file size restrictions
+- **Secure File Serving** - Protected file access with proper URLs
+
+### Dashboard & Management
+- **Modern Dashboard** - Clean, responsive interface with comprehensive analytics
+- **Submission Management** - View, filter, and manage form submissions
+- **File Management** - Download and preview uploaded files
+- **Form Analytics** - Track submission counts and form performance
+- **Bulk Operations** - Mark submissions as spam, delete multiple submissions
+
+### Developer Experience
+- **Zero Backend Required** - No server setup needed for form handling
+- **Universal Integration** - Works with any frontend framework or static site
+- **Webhook Support** - Real-time notifications for new submissions
+- **RESTful API** - Standard HTTP methods for form submissions
+- **Rate Limiting** - Built-in protection against spam and abuse
 
 ### Authentication & Security
 - **JWT Authentication** - Secure token-based authentication
 - **Google OAuth** - Social login with Google
 - **Password Reset** - Secure email-based password reset flow
-- **Email Verification** - Account verification via email
-- **Password Hashing** - bcryptjs for secure password storage
 - **Protected Routes** - Route-level authentication guards
-
-### Frontend
-- **Modern Dashboard** - Clean, responsive dashboard with sidebar navigation
-- **User Profile Management** - Complete profile editing with avatar support
-- **Google Profile Pictures** - Automatic avatar display from Google OAuth
-- **Form Validation** - React Hook Form with Zod validation
-- **Responsive Design** - Mobile-friendly interface with Tailwind CSS
-- **Error Handling** - Comprehensive error states and user feedback
-
-### Backend
-- **RESTful API** - Well-structured API endpoints
-- **Database ORM** - Prisma with MySQL/PostgreSQL support
-- **Email Integration** - Nodemailer with multiple providers
-- **Type Safety** - Full TypeScript implementation
-- **Validation** - Zod schema validation
-- **Docker Support** - Containerized development environment
+- **Spam Protection** - Honeypot and reCAPTCHA integration
 
 ## Project Structure
 
 ```
-├── backend/             # Node.js + TypeScript API server
+├── backend/                    # Node.js + TypeScript API server
 │   ├── src/
-│   │   ├── auth/       # Authentication logic & routes
-│   │   ├── user/       # User management
-│   │   ├── config/     # Configuration files
-│   │   ├── infrastructure/ # Email providers
-│   │   └── presentation/   # Middleware & routes
-│   ├── prisma/         # Database schema and migrations
-│   └── dist/           # Compiled JavaScript (generated)
-├── frontend/           # React + TypeScript frontend
+│   │   ├── auth/              # Authentication logic & routes
+│   │   ├── user/              # User management
+│   │   ├── form/              # Form creation and management
+│   │   ├── submission/        # Form submission handling
+│   │   ├── middleware/        # File upload and validation middleware
+│   │   ├── config/            # Storage and application configuration
+│   │   └── scripts/           # Utility scripts for maintenance
+│   ├── prisma/                # Database schema and migrations
+│   └── uploads/               # Local file storage (when using local storage)
+├── frontend/                  # React + TypeScript frontend
 │   ├── src/
-│   │   ├── components/ # Reusable UI components
-│   │   ├── pages/      # Application pages
-│   │   ├── layouts/    # Layout components
-│   │   ├── context/    # React context providers
-│   │   ├── hooks/      # Custom React hooks
-│   │   └── lib/        # Utility libraries
-└── docker-compose.yml  # Development environment
+│   │   ├── components/        # Reusable UI components
+│   │   ├── pages/             # Application pages (Dashboard, Form Builder)
+│   │   ├── layouts/           # Layout components
+│   │   ├── context/           # React context providers
+│   │   └── lib/               # Utility libraries
+│   └── public/                # Static assets
+├── docker-compose.yml         # Multi-storage Docker configuration
+├── STORAGE_SETUP.md          # Storage configuration guide
+└── README.md                 # This file
 ```
 
 ## Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
-- Docker & Docker Compose
-- Git
+- Node.js 18+ and npm
+- Docker and Docker Compose
+- MySQL (or use Docker)
 
-### 1. Clone and Setup
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd formgrid
+   ```
+
+2. **Set up environment variables**
+   ```bash
+   # Backend environment
+   cd backend
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+3. **Install dependencies**
+   ```bash
+   # Backend
+   cd backend
+   npm install
+
+   # Frontend
+   cd ../frontend
+   npm install
+   ```
+
+4. **Set up the database**
+   ```bash
+   cd backend
+   npx prisma migrate dev
+   npx prisma generate
+   ```
+
+5. **Start the application**
+   ```bash
+   # Using Docker (recommended)
+   docker-compose up
+
+   # Or run locally
+   # Backend
+   cd backend && npm run dev
+
+   # Frontend (in another terminal)
+   cd frontend && npm run dev
+   ```
+
+6. **Access the application**
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:4001
+   - MinIO Console: http://localhost:9001 (if using MinIO storage)
+
+## Storage Configuration
+
+FormGrid supports multiple storage options for file uploads:
+
+### Local Storage (Default)
 ```bash
-git clone <repository-url>
-cd express-react-auth-boilerplate
+docker-compose up
 ```
 
-### 2. Start Development Environment
+### MinIO (S3-Compatible)
 ```bash
-# Start all services (database, backend, frontend)
-docker-compose up -d
-
-# Or start services individually:
-docker-compose up -d express-react-auth-db    # Database
-docker-compose up -d express-react-auth-backend  # Backend API
-docker-compose up -d express-react-auth-frontend # Frontend
+FILE_STORAGE_TYPE=minio docker-compose up
 ```
 
-### 3. Setup Database (if needed)
+### AWS S3
 ```bash
-# Run database migrations
-docker-compose exec backend npx prisma db push
+FILE_STORAGE_TYPE=s3 AWS_ACCESS_KEY_ID=xxx AWS_SECRET_ACCESS_KEY=xxx docker-compose up
 ```
 
-### 4. Access the Application
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:4001
-- **Database**: localhost:3306 (MySQL)
-
-## Frontend
-
-The frontend is a React + TypeScript application with modern UI components and comprehensive authentication flow.
-
-### Features
-- **Modern Dashboard** - Sidebar navigation with user avatar dropdown
-- **Authentication Pages** - Login, signup, forgot password, reset password
-- **Profile Management** - Edit profile with avatar support
-- **Responsive Design** - Mobile-first approach with Tailwind CSS
-- **Form Handling** - React Hook Form with validation
-- **State Management** - React Context for authentication
-
-### Pages & Routes
-- `/` - Landing page
-- `/login` - User login
-- `/signup` - User registration
-- `/forgot-password` - Password reset request
-- `/reset-password` - Password reset with token
-- `/dashboard` - Main dashboard (protected)
-- `/dashboard/profile` - User profile (protected)
-- `/dashboard/settings` - User settings (protected)
-
-## Backend
-
-The backend is a Node.js + TypeScript API server with Express, Prisma, and comprehensive authentication features.
-
-### API Endpoints
-
-#### Authentication
-- `POST /api/auth/signup` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/forgot-password` - Request password reset
-- `POST /api/auth/reset-password` - Reset password with token
-- `GET /api/auth/verify` - Verify email address
-- `POST /api/auth/resend-verification` - Resend verification email
-- `GET /api/auth/me` - Get current user info
-- `GET /api/auth/google` - Google OAuth login
-- `GET /api/auth/google/callback` - Google OAuth callback
-
-#### User Management
-- `GET /api/user/me` - Get user profile
-- `PUT /api/user/me` - Update user profile
-- `GET /api/user/info` - Get user basic info
-
-### Development
-
+### Google Cloud Storage
 ```bash
-# Backend development
-cd backend
-npm install
-npm run dev
+FILE_STORAGE_TYPE=gcs GCS_PROJECT_ID=xxx docker-compose up
+```
 
-# Frontend development  
-cd frontend
-npm install
-npm run dev
+For detailed storage setup instructions, see [STORAGE_SETUP.md](./STORAGE_SETUP.md).
+
+## How It Works
+
+1. **Create an Endpoint** - Generate a unique API endpoint for your form
+2. **Configure Fields** - Set up form fields including file uploads with restrictions
+3. **Get Your Code** - Copy the generated HTML/JavaScript form code
+4. **Embed Anywhere** - Add the form to any website, static site, or application
+5. **Collect Submissions** - View and manage submissions in your dashboard
+6. **No Backend Needed** - FormGrid handles all the server-side processing
+
+## API Usage
+
+### HTML Form Integration
+```html
+<!-- Simple HTML form - just change the action URL -->
+<form action="https://your-formgrid-instance.com/api/f/your-form-slug" method="POST" enctype="multipart/form-data">
+    <input type="text" name="name" placeholder="Your Name" required>
+    <input type="email" name="email" placeholder="Your Email" required>
+    <textarea name="message" placeholder="Your Message" required></textarea>
+    <input type="file" name="attachment" accept="image/*,.pdf">
+    <button type="submit">Send Message</button>
+</form>
+```
+
+### JavaScript Integration
+```javascript
+// Works with any frontend framework or vanilla JavaScript
+const form = document.getElementById('myForm');
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch('https://your-formgrid-instance.com/api/f/your-form-slug', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            alert('Form submitted successfully!');
+            form.reset();
+        } else {
+            alert('Error submitting form');
+        }
+    } catch (error) {
+        alert('Error submitting form');
+    }
+});
+```
+
+### Direct API Calls
+```javascript
+// Submit form data programmatically
+const response = await fetch('https://your-formgrid-instance.com/api/f/your-form-slug', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+        name: 'John Doe',
+        email: 'john@example.com',
+        message: 'Hello from my app!'
+    })
+});
 ```
 
 ## Environment Variables
 
-### Backend (.env)
+### Required
 ```env
-NODE_ENV=development
-PORT=4001
-DATABASE_URL="mysql://root:password@express-react-auth-db:3306/express_react_auth"
-JWT_SECRET="your-super-secret-jwt-key"
-JWT_EXPIRES_IN="7d"
-APP_URL="http://localhost:4001"
-
-# Google OAuth (optional)
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-
-# Email Configuration
-EMAIL_PROVIDER="console" # console, smtp, or resend
-SMTP_HOST="smtp.gmail.com"
-SMTP_PORT=587
-SMTP_USER="your-email@gmail.com"
-SMTP_PASS="your-app-password"
-RESEND_API_KEY="your-resend-api-key"
+JWT_SECRET=your-super-secret-jwt-key
+DATABASE_URL=mysql://user:password@localhost:3306/formgrid
+EMAIL_FROM=noreply@yourdomain.com
+RESEND_API_KEY=your-resend-api-key
 ```
 
-### Frontend (.env)
+### Optional
 ```env
-VITE_API_URL=http://localhost:4001
+# File Storage
+FILE_STORAGE_TYPE=local
+MAX_FILE_SIZE=10485760
+MAX_FILES=10
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# AWS S3
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_S3_BUCKET=your-bucket-name
 ```
 
-## Docker Development
+## Development
 
-The project includes Docker Compose for easy development setup:
+### Available Scripts
 
+**Backend:**
 ```bash
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-
-# Rebuild services
-docker-compose up -d --build
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run cleanup      # Clean up old files
+npm run setup:minio  # Setup MinIO bucket
 ```
 
-## Available Scripts
+**Frontend:**
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+```
 
-### Backend
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Compile TypeScript to JavaScript
-- `npm start` - Start production server
-- `npm run prisma:generate` - Generate Prisma client
-- `npm run prisma:push` - Push schema changes to database
-- `npm run prisma:migrate` - Run database migrations
-
-### Frontend
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
+### Database Management
+```bash
+npx prisma migrate dev    # Create and apply migrations
+npx prisma generate       # Generate Prisma client
+npx prisma studio         # Open Prisma Studio
+```
 
 ## Deployment
 
-### Production Build
+### Docker Production
 ```bash
-# Build backend
-cd backend && npm run build
+# Build and start all services
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
-# Build frontend
-cd frontend && npm run build
+# Setup storage (if needed)
+docker-compose exec backend npm run setup:minio
 
-# Start production
-docker-compose -f docker-compose.prod.yml up -d
+# Cleanup old files
+docker-compose exec backend npm run cleanup
 ```
 
-## Testing
-
-```bash
-# Backend tests
-cd backend && npm test
-
-# Frontend tests
-cd frontend && npm test
-```
+### Manual Deployment
+1. Build the frontend: `npm run build`
+2. Build the backend: `npm run build`
+3. Set up your database and environment variables
+4. Start the backend server: `npm start`
+5. Serve the frontend build files
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit your changes: `git commit -m 'Add feature'`
+4. Push to the branch: `git push origin feature-name`
+5. Submit a pull request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+## Support
 
-- [Express.js](https://expressjs.com/) - Web framework
-- [React](https://reactjs.org/) - Frontend library
-- [Prisma](https://www.prisma.io/) - Database ORM
-- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
-- [TypeScript](https://www.typescriptlang.org/) - Type safety
+For support, please open an issue on GitHub or contact the development team.
+
+---
+
+**FormGrid** - The Form Endpoint API Generator that creates powerful, secure API endpoints for your HTML forms. No backend required.
