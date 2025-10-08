@@ -1597,23 +1597,26 @@ form.addEventListener('submit', async (e) => {
                                                                             </div>
                                                                             <div className="flex items-center space-x-2">
                                                                                 <a
-                                                                                    href={`http://localhost:4001${file.url}`}
+                                                                                    href={`http://localhost:4001/uploads/${file.filename}`}
                                                                                     target="_blank"
                                                                                     rel="noopener noreferrer"
                                                                                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                                                                                 >
-                                                                                    Download
+                                                                                    View
                                                                                 </a>
-                                                                                {file.mimetype?.startsWith('image/') && (
-                                                                                    <a
-                                                                                        href={`http://localhost:4001${file.url}`}
-                                                                                        target="_blank"
-                                                                                        rel="noopener noreferrer"
-                                                                                        className="text-gray-600 hover:text-gray-800 text-sm font-medium"
-                                                                                    >
-                                                                                        View
-                                                                                    </a>
-                                                                                )}
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        const link = document.createElement('a');
+                                                                                        link.href = `http://localhost:4001/uploads/${file.filename}`;
+                                                                                        link.download = file.originalName || file.filename;
+                                                                                        document.body.appendChild(link);
+                                                                                        link.click();
+                                                                                        document.body.removeChild(link);
+                                                                                    }}
+                                                                                    className="text-gray-600 hover:text-gray-800 text-sm font-medium cursor-pointer"
+                                                                                >
+                                                                                    Download
+                                                                                </button>
                                                                             </div>
                                                                         </div>
                                                                     ))}
