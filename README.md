@@ -160,11 +160,48 @@ For detailed storage setup instructions, see [STORAGE_SETUP.md](./STORAGE_SETUP.
 5. **Collect Submissions** - View and manage submissions in your dashboard
 6. **No Backend Needed** - FormGrid handles all the server-side processing
 
-## API Usage
+## How to Use
 
-### HTML Form Integration
+### HTML Form Snippet
 ```html
 <!-- Simple HTML form - just change the action URL -->
+<form action="https://your-formgrid-instance.com/api/f/your-form-slug" method="POST">
+    <input type="text" name="name" placeholder="Your Name" required>
+    <input type="email" name="email" placeholder="Your Email" required>
+    <textarea name="message" placeholder="Your Message" required></textarea>
+    <button type="submit">Send Message</button>
+</form>
+```
+
+### JavaScript (Async Submission)
+```javascript
+// Works with any frontend framework or vanilla JavaScript
+const form = document.getElementById('myForm');
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch('https://your-formgrid-instance.com/api/f/your-form-slug', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            alert('Form submitted successfully!');
+            form.reset();
+        }
+    } catch (error) {
+        alert('Error submitting form');
+    }
+});
+```
+
+### With File Upload
+Use these code snippets if you want to include file upload functionality in your form.
+
+#### HTML Form (with file upload)
+```html
 <form action="https://your-formgrid-instance.com/api/f/your-form-slug" method="POST" enctype="multipart/form-data">
     <input type="text" name="name" placeholder="Your Name" required>
     <input type="email" name="email" placeholder="Your Email" required>
@@ -174,7 +211,7 @@ For detailed storage setup instructions, see [STORAGE_SETUP.md](./STORAGE_SETUP.
 </form>
 ```
 
-### JavaScript Integration
+#### JavaScript (with file upload)
 ```javascript
 // Works with any frontend framework or vanilla JavaScript
 const form = document.getElementById('myForm');
@@ -197,22 +234,6 @@ form.addEventListener('submit', async (e) => {
     } catch (error) {
         alert('Error submitting form');
     }
-});
-```
-
-### Direct API Calls
-```javascript
-// Submit form data programmatically
-const response = await fetch('https://your-formgrid-instance.com/api/f/your-form-slug', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        name: 'John Doe',
-        email: 'john@example.com',
-        message: 'Hello from my app!'
-    })
 });
 ```
 
