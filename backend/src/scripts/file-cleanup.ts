@@ -58,17 +58,18 @@ const cleanupOldFiles = async () => {
                                 }
                             }
                         }
-                    } else if (value && typeof value === 'object' && value.filename) {
+                    } else if (value && typeof value === 'object' && (value as any).filename) {
                         // Single file
+                        const fileValue = value as any;
                         try {
                             if (!dryRun) {
-                                await deleteFile(value.filename);
+                                await deleteFile(fileValue.filename);
                             }
                             filesDeleted++;
-                            console.log(`${dryRun ? '[DRY RUN] ' : ''}🗑️  Deleted: ${value.filename}`);
+                            console.log(`${dryRun ? '[DRY RUN] ' : ''}🗑️  Deleted: ${fileValue.filename}`);
                         } catch (error) {
                             errors++;
-                            console.error(`❌ Failed to delete ${value.filename}:`, error);
+                            console.error(`❌ Failed to delete ${fileValue.filename}:`, error);
                         }
                     }
                 }
