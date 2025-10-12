@@ -3,13 +3,44 @@ import { Command } from "commander";
 import { execa } from "execa";
 import chalk from "chalk";
 import ora from "ora";
+import { existsSync } from "fs";
+import { join } from "path";
 
 const program = new Command();
+
+/**
+ * Check if running from FormGrid project root
+ */
+function isFormGridProject(): boolean {
+    return existsSync("docker/docker-compose.yml") &&
+        existsSync("pnpm-workspace.yaml") &&
+        existsSync("packages/api");
+}
+
+/**
+ * Ensure running from project root
+ */
+function ensureProjectRoot(): void {
+    if (!isFormGridProject()) {
+        console.error(chalk.red("Error: Must run from FormGrid project root directory"));
+        console.log(chalk.yellow("\n Navigate to your FormGrid project first:"));
+        console.log(chalk.gray("   cd /path/to/formgrid"));
+        console.log(chalk.gray("   formgrid start"));
+        console.log(chalk.gray("\nOr clone FormGrid:"));
+        console.log(chalk.gray("   git clone git@github.com:allenarduino/formgrid.git"));
+        console.log(chalk.gray("   cd formgrid"));
+        console.log(chalk.gray("   formgrid start"));
+        process.exit(1);
+    }
+}
 
 program
     .name("formgrid")
     .description("CLI for running Formgrid locally (using Docker)")
-    .version("1.0.0");
+    .version("1.0.0")
+    .hook("preAction", () => {
+        ensureProjectRoot();
+    });
 
 program
     .command("start")

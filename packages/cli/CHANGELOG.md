@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.2] - 2025-10-11
+
+### Changed
+- Updated README with clearer usage instructions
+- Emphasized that CLI must be run from project root directory
+
+## [1.0.1] - 2025-10-11
+
+### Fixed
+- Added project root validation to prevent errors when running outside FormGrid directory
+- CLI now checks for required files before executing commands
+- Added helpful error messages guiding users to navigate to project root
+- Improved user experience with clear instructions for first-time users
+
 ## [1.0.0] - 2025-10-11
 
 ### Added

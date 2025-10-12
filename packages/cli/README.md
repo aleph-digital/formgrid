@@ -9,10 +9,34 @@ A Supabase-like CLI for managing and running Formgrid locally with Docker.
 ```bash
 # Install from npm
 npm install -g formgrid-cli
+```
 
-# Now use from anywhere
+## Usage
+
+**Important:** The CLI must be run from your FormGrid project root directory.
+
+```bash
+# 1. Navigate to your FormGrid project
+cd /path/to/formgrid
+
+# 2. Run commands
 formgrid start
 formgrid status
+formgrid logs
+```
+
+### First Time Setup
+
+```bash
+# Clone FormGrid
+git clone https://github.com/allenarduino/formgrid.git
+cd formgrid
+
+# Install dependencies
+pnpm install
+
+# Start with CLI
+formgrid start -d
 ```
 
 ### Local Usage (Development)
