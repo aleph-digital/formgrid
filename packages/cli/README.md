@@ -35,6 +35,9 @@ cd formgrid
 # Install dependencies
 pnpm install
 
+# Initialize environment files
+formgrid init
+
 # Start with CLI
 formgrid start -d
 ```
@@ -51,6 +54,24 @@ pnpm dev -- <command>
 ```
 
 ## Commands
+
+### `formgrid init`
+
+Initialize FormGrid by creating required environment files.
+
+```bash
+formgrid init
+```
+
+**What it does:**
+- Creates `docker/.env` from example or with defaults
+- Creates `packages/api/.env` from example or with defaults
+- Sets up minimal configuration to get started
+- Skips files that already exist
+
+**Run this first** before starting FormGrid for the first time.
+
+---
 
 ### `formgrid start`
 

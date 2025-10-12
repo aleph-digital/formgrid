@@ -3,7 +3,7 @@ import { Command } from "commander";
 import { execa } from "execa";
 import chalk from "chalk";
 import ora from "ora";
-import { existsSync } from "fs";
+import { existsSync, copyFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
 const program = new Command();
@@ -43,10 +43,86 @@ program
     });
 
 program
+    .command("init")
+    .description("Initialize FormGrid environment files")
+    .action(async () => {
+        const spinner = ora("Initializing FormGrid...").start();
+
+        try {
+            // Create docker/.env if it doesn't exist
+            if (!existsSync("docker/.env")) {
+                if (existsSync("docker/.env.example")) {
+                    copyFileSync("docker/.env.example", "docker/.env");
+                    spinner.info(chalk.green("✓ Created docker/.env from example"));
+                } else {
+                    // Create minimal docker/.env
+                    const dockerEnv = `# Docker Compose Environment Variables
+JWT_SECRET=development-secret-key-change-in-production
+EMAIL_FROM=noreply@formgrid.local
+RESEND_API_KEY=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=
+GCS_PROJECT_ID=
+GCS_BUCKET_NAME=
+FILE_STORAGE_TYPE=local
+`;
+                    writeFileSync("docker/.env", dockerEnv);
+                    spinner.info(chalk.green("✓ Created docker/.env"));
+                }
+            } else {
+                spinner.info(chalk.gray("✓ docker/.env already exists"));
+            }
+
+            // Create packages/api/.env if it doesn't exist
+            if (!existsSync("packages/api/.env")) {
+                if (existsSync("packages/api/.env.example")) {
+                    copyFileSync("packages/api/.env.example", "packages/api/.env");
+                    spinner.info(chalk.green("✓ Created packages/api/.env from example"));
+                } else {
+                    // Create minimal API .env
+                    const apiEnv = `DATABASE_URL=mysql://app_user:app_password@db:3306/formgrid
+JWT_SECRET=development-secret-key-change-in-production
+EMAIL_FROM=noreply@formgrid.local
+RESEND_API_KEY=
+NODE_ENV=development
+PORT=4000
+`;
+                    writeFileSync("packages/api/.env", apiEnv);
+                    spinner.info(chalk.green("✓ Created packages/api/.env"));
+                }
+            } else {
+                spinner.info(chalk.gray("✓ packages/api/.env already exists"));
+            }
+
+            spinner.succeed(chalk.green("FormGrid initialized successfully!"));
+            console.log(chalk.cyan("\n Next steps:"));
+            console.log(chalk.white("  1. Edit docker/.env and packages/api/.env with your values"));
+            console.log(chalk.white("  2. Run: ") + chalk.cyan("formgrid start"));
+            console.log(chalk.gray("\nTip: For production, change JWT_SECRET to a secure random string"));
+        } catch (err: any) {
+            spinner.fail(chalk.red("Failed to initialize FormGrid."));
+            console.error(chalk.red(err.message));
+            process.exit(1);
+        }
+    });
+
+program
     .command("start")
     .description("Start Formgrid locally using Docker Compose")
     .option("-d, --detached", "Run in detached mode (background)")
     .action(async (options) => {
+        // Check if .env files exist
+        if (!existsSync("docker/.env") || !existsSync("packages/api/.env")) {
+            console.log(chalk.yellow("Environment files not found!"));
+            console.log(chalk.cyan("\nRun this first to set up your environment:"));
+            console.log(chalk.white("   formgrid init\n"));
+            process.exit(1);
+        }
+
         const spinner = ora("Starting Formgrid with Docker...").start();
         try {
             const args = ["-f", "docker/docker-compose.yml", "up", "--build"];

@@ -90,21 +90,24 @@ formgrid/
 ### For End Users (Simple Setup)
 
 ```bash
-# 1. Clone the repository
+# 1. Install the CLI
+npm install -g formgrid-cli
+
+# 2. Clone the repository
 git clone <repository-url>
 cd formgrid
 
-# 2. Install dependencies
+# 3. Install dependencies
 npm install -g pnpm
 pnpm install
 
-# 3. Set up environment (copy and edit .env)
-cd packages/api && cp .env.example .env && cd ../..
+# 4. Initialize environment files
+formgrid init
 
-# 4. Start everything with the CLI
-pnpm formgrid start -d
+# 5. Start everything
+formgrid start -d
 
-# 5. Access at http://localhost:5173
+# 6. Access at http://localhost:5173
 ```
 
 **That's it!** See [INSTALLATION.md](INSTALLATION.md) for detailed setup options.
@@ -187,13 +190,17 @@ npx formgrid-cli start
 ### Using the CLI
 
 ```bash
-# Global installation
+# First time setup
+formgrid init          # Create environment files
+
+# Start and manage
 formgrid start -d      # Start in background
 formgrid status        # Check status
 formgrid logs          # View logs
 formgrid stop          # Stop everything
 
-# Or from monorepo root
+# Or from monorepo root (without global install)
+pnpm formgrid init
 pnpm formgrid start -d
 pnpm formgrid status
 
@@ -205,6 +212,7 @@ formgrid --help
 
 | Command | Description |
 |---------|-------------|
+| `formgrid init` | **Initialize environment files (run first!)** |
 | `formgrid start` | Start all Docker services |
 | `formgrid start -d` | Start in detached/background mode |
 | `formgrid stop` | Stop all services |

@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.3] - 2025-10-11
+
+### Added
+- `formgrid init` command to set up environment files automatically
+- Pre-start validation that checks for .env files
+- Helpful error messages when .env files are missing
+
+### Fixed
+- CLI now creates docker/.env and packages/api/.env if missing
+- Start command prompts to run `formgrid init` if .env files don't exist
+- Better user experience for first-time setup
+
 ## [1.0.2] - 2025-10-11
 
 ### Changed
