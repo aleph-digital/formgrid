@@ -14,6 +14,9 @@
     "api:test": "pnpm --filter @formgrid/api run test",
     "dashboard:dev": "pnpm --filter @formgrid/dashboard run dev",
     "dashboard:build": "pnpm --filter @formgrid/dashboard run build",
+    "cli:dev": "pnpm --filter @formgrid/cli run dev",
+    "cli:build": "pnpm --filter @formgrid/cli run build",
+    "formgrid": "node packages/cli/dist/index.js",
     "docker:up": "docker compose -f docker/docker-compose.yml up --build",
     "docker:down": "docker compose -f docker/docker-compose.yml down",
     "docker:clean": "docker compose -f docker/docker-compose.yml down -v && docker system prune -f"

@@ -56,20 +56,22 @@ formgrid/
 │       │   └── lib/               # Utility libraries
 │       └── public/                # Static assets
 ├── packages/                      # Reusable libraries & backend code
-│   └── api/                       # Node.js + TypeScript API (@formgrid/api)
-│       ├── src/
-│       │   ├── auth/              # Authentication logic & routes
-│       │   ├── user/              # User management
-│       │   ├── form/              # Form creation and management
-│       │   ├── submission/        # Form submission handling
-│       │   ├── services/          # Email, spam protection, analytics
-│       │   ├── middleware/        # Rate limiting, file uploads
-│       │   ├── infrastructure/    # Storage adapters, email providers
-│       │   ├── jobs/              # Queues, cron jobs, async tasks
-│       │   └── scripts/           # Utility scripts for maintenance
-│       ├── prisma/                # Database schema and migrations
-│       ├── tests/                 # Unit & integration tests
-│       └── uploads/               # Local file storage
+│   ├── api/                       # Node.js + TypeScript API (@formgrid/api)
+│   │   ├── src/
+│   │   │   ├── auth/              # Authentication logic & routes
+│   │   │   ├── user/              # User management
+│   │   │   ├── form/              # Form creation and management
+│   │   │   ├── submission/        # Form submission handling
+│   │   │   ├── services/          # Email, spam protection, analytics
+│   │   │   ├── middleware/        # Rate limiting, file uploads
+│   │   │   ├── infrastructure/    # Storage adapters, email providers
+│   │   │   ├── jobs/              # Queues, cron jobs, async tasks
+│   │   │   └── scripts/           # Utility scripts for maintenance
+│   │   ├── prisma/                # Database schema and migrations
+│   │   ├── tests/                 # Unit & integration tests
+│   │   └── uploads/               # Local file storage
+│   └── cli/                       # CLI tool (@formgrid/cli)
+│       └── src/                   # Supabase-like CLI for Docker management
 ├── docker/                        # Docker configurations
 │   ├── docker-compose.yml         # Multi-storage Docker configuration
 │   ├── docker-compose.override.yml
@@ -85,13 +87,39 @@ formgrid/
 
 ## Quick Start
 
-### Prerequisites
+### For End Users (Simple Setup)
+
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd formgrid
+
+# 2. Install dependencies
+npm install -g pnpm
+pnpm install
+
+# 3. Set up environment (copy and edit .env)
+cd packages/api && cp .env.example .env && cd ../..
+
+# 4. Start everything with the CLI
+pnpm formgrid start -d
+
+# 5. Access at http://localhost:5173
+```
+
+**That's it!** See [INSTALLATION.md](INSTALLATION.md) for detailed setup options.
+
+---
+
+### For Developers (Full Setup)
+
+#### Prerequisites
 - Node.js 18+ 
 - pnpm 8+ (recommended) - `npm install -g pnpm`
 - Docker and Docker Compose
 - MySQL (or use Docker)
 
-### Installation
+#### Installation
 
 1. **Clone the repository**
    ```bash
@@ -141,6 +169,40 @@ formgrid/
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:4001
    - MinIO Console: http://localhost:9001 (if using MinIO storage)
+
+## CLI Tool
+
+FormGrid comes with a Supabase-like CLI for managing your local Docker instance:
+
+### Using the CLI
+
+```bash
+# Quick start
+pnpm formgrid start -d      # Start in background
+pnpm formgrid status        # Check status
+pnpm formgrid logs          # View logs
+pnpm formgrid stop          # Stop everything
+
+# All available commands
+pnpm formgrid --help
+```
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `formgrid start` | Start all Docker services |
+| `formgrid start -d` | Start in detached/background mode |
+| `formgrid stop` | Stop all services |
+| `formgrid restart` | Restart all services |
+| `formgrid logs` | View logs (all services) |
+| `formgrid logs -s backend` | View specific service logs |
+| `formgrid ps` | List running containers |
+| `formgrid status` | Check service health |
+| `formgrid clean` | Remove all containers & volumes |
+| `formgrid migrate` | Run database migrations |
+
+See [`packages/cli/README.md`](packages/cli/README.md) for detailed CLI documentation.
 
 ## Storage Configuration
 
