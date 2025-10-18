@@ -40,7 +40,7 @@ export function UserAvatar({ user, size = 'md', className = '' }: UserAvatarProp
     };
 
     // Check for avatar URL with fallback handling
-    const avatarUrl = user?.profile?.avatarUrl || user?.googlePicture;
+    const avatarUrl = user?.profile?.avatarUrl;
 
     if (avatarUrl) {
         return (

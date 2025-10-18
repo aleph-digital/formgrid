@@ -16,9 +16,9 @@ app.use('/api/auth', createAuthRoutes());
 
 // Available endpoints:
 // POST /api/auth/signup - Register new user
-// GET  /api/auth/verify?token=xxx - Verify email
 // POST /api/auth/login - Login user
 // POST /api/auth/verify-token - Verify JWT token
-// POST /api/auth/resend-verification - Resend verification email
+// POST /api/auth/forgot-password - Request password reset
+// POST /api/auth/reset-password - Reset password with token
 // GET  /api/auth/me - Get current user (requires Bearer token)
 */

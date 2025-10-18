@@ -34,8 +34,8 @@
 
 ### Authentication & Security
 - **JWT Authentication** - Secure token-based authentication
-- **Google OAuth** - Social login with Google
-- **Password Reset** - Secure email-based password reset flow
+- **Email/Password Auth** - Simple signup and login with JWT tokens
+- **Password Reset** - Secure email-based password reset flow (optional)
 - **Protected Routes** - Route-level authentication guards
 - **Spam Protection** - Honeypot and reCAPTCHA integration
 
@@ -343,10 +343,8 @@ form.addEventListener('submit', async (e) => {
 
 ### Required
 ```env
-JWT_SECRET=your-super-secret-jwt-key
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 DATABASE_URL=mysql://user:password@localhost:3306/formgrid
-EMAIL_FROM=noreply@yourdomain.com
-RESEND_API_KEY=your-resend-api-key
 ```
 
 ### Optional
@@ -356,14 +354,25 @@ FILE_STORAGE_TYPE=local
 MAX_FILE_SIZE=10485760
 MAX_FILES=10
 
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# Email (for password reset - optional)
+EMAIL_PROVIDER=console
+EMAIL_FROM=FormGrid <noreply@formgrid.dev>
+RESEND_API_KEY=your-resend-api-key
+
+# SMTP (alternative to Resend)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
 
 # AWS S3
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 AWS_S3_BUCKET=your-bucket-name
+
+# Spam Protection (optional)
+RECAPTCHA_SECRET_KEY=your-recaptcha-secret-key
+RECAPTCHA_SITE_KEY=your-recaptcha-site-key
 ```
 
 ## Development

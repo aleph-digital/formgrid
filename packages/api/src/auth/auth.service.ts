@@ -17,13 +17,13 @@ export class AuthService {
     ) { }
 
     /**
-     * Register a new user with email verification
+     * Register a new user and return JWT token
      * @param email - User's email address
      * @param password - Plain text password
-     * @returns Promise<{ id: string; email: string }> - Basic user info
+     * @returns Promise<{ id: string; email: string; token: string }> - User info with JWT token
      * @throws Error if user already exists or registration fails
      */
-    async signUp(email: string, password: string): Promise<{ id: string; email: string }> {
+    async signUp(email: string, password: string): Promise<{ id: string; email: string; token: string }> {
         // Check if user already exists
         const existingUser = await this.authRepo.findByEmail(email);
         if (existingUser) {
@@ -33,69 +33,30 @@ export class AuthService {
         // Hash the password
         const passwordHash = await bcrypt.hash(password, 12);
 
-        // Generate verification token (32 bytes = 64 hex characters)
-        const verificationToken = crypto.randomBytes(32).toString('hex');
-        const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-        // Create user with verification token
+        // Create user (email is automatically verified)
         const user = await this.authRepo.createUser({
             email,
             passwordHash,
-            isEmailVerified: false,
-            verificationToken,
-            verificationTokenExpires,
+            isEmailVerified: true,
         });
 
         // Create blank profile for the user
         await this.userRepo.createProfile(user.id);
 
-        // Send verification email
-        const verificationLink = `${env.APP_URL}/api/auth/verify?token=${verificationToken}`;
-        const emailHtml = `
-      <h1>Welcome!</h1>
-      <p>Please verify your email address by clicking the link below:</p>
-      <a href="${verificationLink}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
-      <p>This link will expire in 24 hours.</p>
-      <p>If you didn't create an account, please ignore this email.</p>
-    `;
+        // Generate JWT token
+        const payload = {
+            sub: user.id,
+            email: user.email,
+        };
 
-        await this.emailProvider.send(
-            email,
-            'Verify your email address',
-            emailHtml
-        );
+        const token = jwt.sign(payload, env.JWT_SECRET, {
+            expiresIn: env.JWT_EXPIRES_IN,
+        } as jwt.SignOptions);
 
         return {
             id: user.id,
             email: user.email,
-        };
-    }
-
-    /**
-     * Verify user's email address using verification token
-     * @param token - Verification token from email link
-     * @returns Promise<{ id: string; email: string; isEmailVerified: boolean }> - User info
-     * @throws Error if token is invalid or expired
-     */
-    async verifyEmail(token: string): Promise<{ id: string; email: string; isEmailVerified: boolean }> {
-        // Find user by verification token
-        const user = await this.authRepo.findByVerificationToken(token);
-        if (!user) {
-            throw new Error('Invalid verification token');
-        }
-
-        // Check if token has expired
-        if (!user.verificationTokenExpires || user.verificationTokenExpires < new Date()) {
-            throw new Error('Verification token has expired');
-        }
-
-        // Update user to mark email as verified and clear token fields
-        const updatedUser = await this.authRepo.updateEmailVerification(user.id, true);
-
-        return {
-            id: updatedUser.id,
-            email: updatedUser.email,
-            isEmailVerified: updatedUser.isEmailVerified,
+            token,
         };
     }
 
@@ -104,7 +65,7 @@ export class AuthService {
      * @param email - User's email address
      * @param password - Plain text password
      * @returns Promise<{ token: string }> - JWT token
-     * @throws Error if credentials are invalid or email not verified
+     * @throws Error if credentials are invalid
      */
     async login(email: string, password: string): Promise<{ token: string }> {
         // Find user by email
@@ -120,11 +81,6 @@ export class AuthService {
         const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
         if (!isPasswordValid) {
             throw new Error('Invalid email or password');
-        }
-
-        // Check if email is verified
-        if (!user.isEmailVerified) {
-            throw new Error('Please verify your email address before logging in');
         }
 
         // Generate JWT token
@@ -156,45 +112,6 @@ export class AuthService {
         } catch (error) {
             throw new Error('Invalid or expired token');
         }
-    }
-
-    /**
-     * Resend verification email for existing user
-     * @param email - User's email address
-     * @returns Promise<void>
-     * @throws Error if user not found or already verified
-     */
-    async resendVerificationEmail(email: string): Promise<void> {
-        const user = await this.authRepo.findByEmail(email);
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        if (user.isEmailVerified) {
-            throw new Error('Email is already verified');
-        }
-
-        // Generate new verification token
-        const verificationToken = crypto.randomBytes(32).toString('hex');
-        const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-        // Update user with new token
-        await this.authRepo.updateVerificationToken(user.id, verificationToken, verificationTokenExpires);
-
-        // Send verification email
-        const verificationLink = `${env.APP_URL}/api/auth/verify?token=${verificationToken}`;
-        const emailHtml = `
-      <h1>Verify your email address</h1>
-      <p>Please verify your email address by clicking the link below:</p>
-      <a href="${verificationLink}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
-      <p>This link will expire in 24 hours.</p>
-    `;
-
-        await this.emailProvider.send(
-            email,
-            'Verify your email address',
-            emailHtml
-        );
     }
 
     /**

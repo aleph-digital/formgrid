@@ -52,48 +52,8 @@ export const SignupPage: React.FC = () => {
         }
     }
 
-    if (isSuccess) {
-        return (
-            <Container>
-                <div className="min-h-screen flex items-center justify-center">
-                    <div className="max-w-md w-full space-y-8">
-                        <div className="text-center">
-                            <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-green-100">
-                                <svg
-                                    className="h-6 w-6 text-green-600"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M5 13l4 4L19 7"
-                                    />
-                                </svg>
-                            </div>
-                            <h2 className="mt-6 text-3xl font-bold text-gray-900">
-                                Check your email
-                            </h2>
-                            <p className="mt-2 text-sm text-gray-600">
-                                We've sent a verification link to your email address.
-                                Please check your inbox and click the link to verify your account.
-                            </p>
-                            <div className="mt-6">
-                                <button
-                                    onClick={() => setIsSuccess(false)}
-                                    className="text-gray-600 hover:text-gray-500 font-medium"
-                                >
-                                    Try signing up again
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </Container>
-        )
-    }
+    // Note: isSuccess will be set to true, but the signup function now handles redirect to dashboard
+    // This success state is kept for error handling purposes only
 
     return (
         <Container>

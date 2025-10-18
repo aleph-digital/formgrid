@@ -1,6 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import passport from 'passport';
 import { config } from 'dotenv';
 import path from 'path';
 import { createAuthRoutes } from './auth';
@@ -22,7 +21,6 @@ import { AuthController } from './auth/auth.controller';
 import { UserController } from './user/user.controller';
 import { FormController } from './form/form.controller';
 import { SubmissionController } from './submission/submission.controller';
-import { configureGoogleStrategy } from './auth/google.strategy';
 
 // Load environment variables
 config();
@@ -66,15 +64,9 @@ const userController = new UserController(userService);
 const formController = new FormController(formService);
 const submissionController = new SubmissionController(submissionService);
 
-// Initialize Passport and Google OAuth strategy
-configureGoogleStrategy();
-
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Initialize Passport middleware
-app.use(passport.initialize());
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -168,10 +160,7 @@ const server = app.listen(PORT, () => {
     console.log('\n📋 Available endpoints:');
     console.log('  GET  /health - Health check');
     console.log('  POST /api/auth/signup - Register user');
-    console.log('  GET  /api/auth/verify?token=xxx - Verify email');
     console.log('  POST /api/auth/login - Login user');
-    console.log('  GET  /api/auth/google - Google OAuth login');
-    console.log('  GET  /api/auth/google/callback - Google OAuth callback');
     console.log('  GET  /api/auth/me - Get current user (protected)');
     console.log('  GET  /api/user/me - Get user profile (protected)');
     console.log('  PUT  /api/user/me/profile - Update profile (protected)');

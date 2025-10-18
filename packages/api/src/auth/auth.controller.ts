@@ -1,12 +1,9 @@
 import { Request, Response } from 'express';
-import passport from 'passport';
-import jwt from 'jsonwebtoken';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 import { UserRepository } from '../user/user.repository';
 import { createEmailProvider } from '../infrastructure/email';
-import { signupSchema, loginSchema, verifyEmailSchema, resendVerificationSchema, verifyTokenSchema, passwordResetRequestSchema, passwordResetSchema } from './auth.validation';
-import { env } from '../config/env';
+import { signupSchema, loginSchema, passwordResetRequestSchema, passwordResetSchema } from './auth.validation';
 
 /**
  * Authentication controller for handling HTTP requests
@@ -49,49 +46,15 @@ export class AuthController {
             }
 
             const { email, password } = validationResult.data;
-            const user = await this.authService.signUp(email, password);
+            const result = await this.authService.signUp(email, password);
 
             res.status(201).json({
                 success: true,
-                message: 'User created successfully. Please check your email for verification.',
+                message: 'User created successfully.',
                 data: {
-                    id: user.id,
-                    email: user.email,
-                },
-            });
-        } catch (error) {
-            res.status(400).json({
-                success: false,
-                message: (error as Error).message,
-            });
-        }
-    }
-
-    /**
-     * GET /api/auth/verify
-     * Verify user's email address
-     */
-    async verifyEmail(req: Request, res: Response): Promise<void> {
-        try {
-            const { token } = req.query;
-
-            if (!token || typeof token !== 'string') {
-                res.status(400).json({
-                    success: false,
-                    message: 'Verification token is required',
-                });
-                return;
-            }
-
-            const user = await this.authService.verifyEmail(token);
-
-            res.status(200).json({
-                success: true,
-                message: 'Email verified successfully',
-                data: {
-                    id: user.id,
-                    email: user.email,
-                    isEmailVerified: user.isEmailVerified,
+                    id: result.id,
+                    email: result.email,
+                    token: result.token,
                 },
             });
         } catch (error) {
@@ -172,36 +135,6 @@ export class AuthController {
     }
 
     /**
-     * POST /api/auth/resend-verification
-     * Resend verification email
-     */
-    async resendVerification(req: Request, res: Response): Promise<void> {
-        try {
-            const { email } = req.body;
-
-            if (!email) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Email is required',
-                });
-                return;
-            }
-
-            await this.authService.resendVerificationEmail(email);
-
-            res.status(200).json({
-                success: true,
-                message: 'Verification email sent successfully',
-            });
-        } catch (error) {
-            res.status(400).json({
-                success: false,
-                message: (error as Error).message,
-            });
-        }
-    }
-
-    /**
      * GET /api/auth/me
      * Get current user info from JWT token
      */
@@ -238,10 +171,6 @@ export class AuthController {
                 data: {
                     id: fullUser.id,
                     email: fullUser.email,
-                    name: fullUser.googleName,
-                    googlePicture: fullUser.googlePicture,
-                    isEmailVerified: fullUser.isEmailVerified,
-                    authProvider: fullUser.authProvider
                 },
             });
         } catch (error) {
@@ -250,61 +179,6 @@ export class AuthController {
                 message: (error as Error).message,
             });
         }
-    }
-
-    /**
-     * GET /api/auth/google
-     * Initiate Google OAuth login
-     */
-    async googleLogin(req: Request, res: Response): Promise<void> {
-        passport.authenticate('google', {
-            scope: ['profile', 'email']
-        })(req, res);
-    }
-
-    /**
-     * GET /api/auth/google/callback
-     * Handle Google OAuth callback
-     */
-    googleCallback(req: Request, res: Response): void {
-        passport.authenticate('google', { session: false }, (err: any, user: any) => {
-            if (err) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Authentication failed',
-                    error: err.message,
-                });
-            }
-
-            if (!user) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Authentication failed',
-                });
-            }
-
-            try {
-                // Generate JWT token for the user
-                const payload = {
-                    sub: user.id,
-                    email: user.email,
-                };
-
-                const token = jwt.sign(payload, env.JWT_SECRET, {
-                    expiresIn: env.JWT_EXPIRES_IN,
-                } as jwt.SignOptions);
-
-                // Redirect to frontend with token
-                const frontendUrl = `${env.APP_URL.replace('4001', '5173')}/auth/callback?token=${token}`;
-                return res.redirect(frontendUrl);
-            } catch (error) {
-                return res.status(500).json({
-                    success: false,
-                    message: 'Token generation failed',
-                    error: (error as Error).message,
-                });
-            }
-        })(req, res);
     }
 
     /**

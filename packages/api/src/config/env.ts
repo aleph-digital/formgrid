@@ -27,10 +27,6 @@ interface EnvConfig {
     SMTP_PASS: string;
     SMTP_FROM: string;
 
-    // Google OAuth
-    GOOGLE_CLIENT_ID: string;
-    GOOGLE_CLIENT_SECRET: string;
-
     // Redis
     REDIS_HOST: string;
     REDIS_PORT: string;
@@ -83,10 +79,6 @@ export const env: EnvConfig = {
     SMTP_PASS: process.env.SMTP_PASS || '',
     SMTP_FROM: process.env.SMTP_FROM || process.env.SMTP_USER || '',
 
-    // Google OAuth
-    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
-    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
-
     // Redis
     REDIS_HOST: process.env.REDIS_HOST || 'localhost',
     REDIS_PORT: process.env.REDIS_PORT || '6379',
@@ -114,8 +106,6 @@ export const {
     SMTP_USER,
     SMTP_PASS,
     SMTP_FROM,
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
     RECAPTCHA_SECRET_KEY,
     RECAPTCHA_SITE_KEY,
 } = env;

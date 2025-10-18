@@ -8,7 +8,6 @@ export interface User {
     id: string
     email: string
     name?: string
-    googlePicture?: string
     profile?: {
         name?: string
         bio?: string
@@ -110,12 +109,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setIsLoading(true)
             const response = await api.post('/api/auth/login', credentials)
 
-            const { token: authToken, user: userData } = response.data
+            const { token: authToken } = response.data.data
 
             // Store token in localStorage
             setToken(authToken)
             setTokenState(authToken)
-            setUser(userData)
+
+            // Fetch user profile
+            await fetchUserProfile(authToken)
 
             // Redirect to dashboard
             navigate('/dashboard')
@@ -130,11 +131,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Signup function
     const signup = async (credentials: SignupCredentials) => {
         try {
+            setIsLoading(true)
             const response = await api.post('/api/auth/signup', credentials)
+
+            const { token: authToken } = response.data.data
+
+            // Store token in localStorage
+            setToken(authToken)
+            setTokenState(authToken)
+
+            // Fetch user profile
+            await fetchUserProfile(authToken)
+
+            // Redirect to dashboard
+            navigate('/dashboard')
+
             return response.data
         } catch (error) {
             const errorMessage = getApiErrorMessage(error)
             throw new Error(errorMessage)
+        } finally {
+            setIsLoading(false)
         }
     }
 
