@@ -1,16 +1,23 @@
+# docker/docker-compose.yml — PRODUCTION (Coolify, local file storage)
+#
+# Fixed vs. the upstream dev file:
+#   - build context changed from ".." to "." (resolves correctly under Coolify)
+#   - removed all host "ports:" (Coolify's proxy routes; DB/Redis stay private)
+#   - removed the source bind-mounts + anonymous node_modules (those negate the build)
+#   - removed MinIO (you're on local storage)
+#   - secrets/URLs now come from env / Coolify magic vars instead of being hardcoded
+#
+# [CONFIRM] markers = values that live inside the two Dockerfiles. See chat notes.
+
 services:
-  # MySQL Database
   db:
     image: mysql:8.0
-    container_name: formgrid-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: formgrid
-      MYSQL_USER: app_user
-      MYSQL_PASSWORD: app_password
-    ports:
-      - "3307:3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-formgrid}
+      MYSQL_USER: ${MYSQL_USER:-app_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
       - ./packages/api/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -19,13 +26,9 @@ services:
       timeout: 20s
       retries: 10
 
-  # Redis for Queue System
   redis:
     image: redis:7-alpine
-    container_name: formgrid-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -33,172 +36,94 @@ services:
       timeout: 10s
       retries: 5
 
-  # MinIO - S3-compatible object storage (optional)
-  minio:
-    image: minio/minio:latest
-    container_name: formgrid-minio
-    restart: unless-stopped
-    ports:
-      - "9000:9000"  # API
-      - "9001:9001"  # Console
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
-      MINIO_DEFAULT_BUCKETS: file-uploads
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-
-  # Backend Service
   backend:
     build:
-      context: ..
+      context: .
       dockerfile: packages/api/Dockerfile
-      target: development
-    container_name: formgrid-backend
+      target: production          # [CONFIRM] real production stage name in packages/api/Dockerfile
     restart: unless-stopped
-    ports:
-      - "4001:4000"
-    volumes:
-      - ..:/app
-      - /app/node_modules
-      - /app/packages/api/node_modules
-      - uploads_data:/app/packages/api/uploads  # Local file storage
-      - ./uploads:/app/packages/api/uploads-dev  # Development bind mount (optional)
+    expose:
+      - "4000"                    # app listens on 4000 internally (PORT=4000)
     environment:
-      - NODE_ENV=development
+      - SERVICE_FQDN_BACKEND_4000 # Coolify gives backend a public https domain -> container :4000
+      - NODE_ENV=production
       - PORT=4000
-      - DATABASE_URL=mysql://app_user:app_password@db:3306/formgrid
+      - DATABASE_URL=mysql://${MYSQL_USER:-app_user}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE:-formgrid}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=7d
-      - EMAIL_PROVIDER=resend
+      - APP_URL=${SERVICE_FQDN_BACKEND_4000}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-console}
       - RESEND_API_KEY=${RESEND_API_KEY}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - EMAIL_FROM=${EMAIL_FROM}
-      - APP_URL=http://localhost:4001
-      # File Storage Configuration
-      - FILE_STORAGE_TYPE=local  # Options: local, s3, gcs, minio
+      - EMAIL_FROM=${EMAIL_FROM:-FormGrid <noreply@example.com>}
+      # Local storage: the named volume below MUST be mounted at exactly UPLOAD_PATH
+      - FILE_STORAGE_TYPE=local
       - UPLOAD_PATH=/app/uploads
-      - MAX_FILE_SIZE=10485760  # 10MB
+      - MAX_FILE_SIZE=10485760
       - MAX_FILES=10
-      # AWS S3 Configuration (if using S3)
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_REGION=${AWS_REGION:-us-east-1}
-      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-      # Google Cloud Storage Configuration (if using GCS)
-      - GCS_PROJECT_ID=${GCS_PROJECT_ID}
-      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
-      - GOOGLE_APPLICATION_CREDENTIALS=/app/gcs-credentials.json
-      # MinIO Configuration (if using MinIO)
-      - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin123
-      - MINIO_BUCKET_NAME=file-uploads
-    env_file:
-      - ./packages/api/.env
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio:
-        condition: service_healthy
-    command: ["pnpm", "run", "dev"]
-    working_dir: /app/packages/api
+    # [CONFIRM] If the production image does NOT run migrations on boot, uncomment one
+    # of these (whichever matches what's in the prod image):
+    # command: sh -c "npx prisma migrate deploy && pnpm run start"
+    # command: sh -c "npx prisma migrate deploy && node dist/index.js"
 
-  # Frontend Service
   frontend:
     build:
-      context: ..
+      context: .
       dockerfile: apps/dashboard/Dockerfile
-      target: development
-    container_name: formgrid-frontend
+      target: production          # [CONFIRM] real production stage name in apps/dashboard/Dockerfile
+      args:
+        # Vite bakes this at BUILD time. [CONFIRM] the dashboard Dockerfile declares
+        # `ARG VITE_API_BASE_URL` before `pnpm build`, or this value won't reach the app.
+        VITE_API_BASE_URL: ${SERVICE_FQDN_BACKEND_4000}
     restart: unless-stopped
-    ports:
-      - "5173:5173"
-    volumes:
-      - ..:/app
-      - /app/node_modules
-      - /app/apps/dashboard/node_modules
+    expose:
+      - "80"                      # [CONFIRM] port the prod frontend serves on (nginx=80, `serve`=3000, vite preview=4173)
     environment:
-      - VITE_API_BASE_URL=http://localhost:4001
+      - SERVICE_FQDN_FRONTEND_80  # [CONFIRM] the port suffix here must match the expose port above
     depends_on:
       - backend
-    command: ["pnpm", "run", "dev", "--", "--host"]
-    working_dir: /app/apps/dashboard
 
-  # Queue Worker Service
   queue-worker:
     build:
-      context: ..
+      context: .
       dockerfile: packages/api/Dockerfile
-      target: development
-    container_name: formgrid-queue-worker
+      target: production          # [CONFIRM] same stage as backend
     restart: unless-stopped
-    volumes:
-      - ..:/app
-      - /app/node_modules
-      - /app/packages/api/node_modules
-      - uploads_data:/app/packages/api/uploads
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=mysql://app_user:app_password@db:3306/formgrid
+      - NODE_ENV=production
+      - DATABASE_URL=mysql://${MYSQL_USER:-app_user}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE:-formgrid}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
-      - EMAIL_PROVIDER=resend
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-console}
       - RESEND_API_KEY=${RESEND_API_KEY}
-      - EMAIL_FROM=${EMAIL_FROM}
-      # File Storage Configuration
+      - EMAIL_FROM=${EMAIL_FROM:-FormGrid <noreply@example.com>}
       - FILE_STORAGE_TYPE=local
       - UPLOAD_PATH=/app/uploads
-    env_file:
-      - ./packages/api/.env
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # [CONFIRM] In the prod image, is pnpm present? If not, use the compiled entry, e.g.
+    # command: ["node", "dist/worker.js"]
     command: ["pnpm", "run", "worker"]
-    working_dir: /app/packages/api
 
-  # File Cleanup Service (optional)
-  file-cleanup:
-    build:
-      context: ..
-      dockerfile: packages/api/Dockerfile
-      target: development
-    container_name: formgrid-file-cleanup
-    restart: unless-stopped
-    volumes:
-      - uploads_data:/app/packages/api/uploads
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=mysql://app_user:app_password@db:3306/formgrid
-      - FILE_CLEANUP_AGE_DAYS=30
-      - FILE_CLEANUP_DRY_RUN=false
-    env_file:
-      - ./packages/api/.env
-    depends_on:
-      db:
-        condition: service_healthy
-    command: ["pnpm", "run", "cleanup"]
-    working_dir: /app/packages/api
-    profiles:
-      - maintenance
+# file-cleanup (upstream had it under profile: maintenance) is intentionally omitted.
+# Better as a Coolify Scheduled Task running: pnpm run cleanup
 
 volumes:
   mysql_data:
   redis_data:
-  uploads_data:  # Local file storage
-  minio_data:    # MinIO object storage
+  uploads_data:
